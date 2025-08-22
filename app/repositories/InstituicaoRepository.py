@@ -14,7 +14,7 @@ from sqlalchemy import select, func, and_, or_, desc, asc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.instituicao import Instituicao
+from app.models.Instituicao import Instituicao
 from app.schemas.instituicao import InstituicaoCreate, InstituicaoUpdate
 
 # === GENERIC REPOSITORY BASE ===
