@@ -2,22 +2,15 @@ from __future__ import annotations
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    """Configurações globais da aplicação (carrega de variáveis de ambiente e .env)."""
-
-    # Requeridas em produção:
-    DATABASE_URL: str        # ex: postgresql+psycopg://user:pass@host:5433/ppg_hub
+    DATABASE_URL: str        # URL do banco
     SECRET_KEY: str          # usada no JWT
+    DEBUG: bool = True
+    ENVIRONMENT: str = "development"  # development, staging, production
 
-    # Opcionais:
-    DEBUG: bool = False
-    ENVIRONMENT: str = "production"
-
-    # ⚙️ Diz ao pydantic-settings para ler o arquivo .env na raiz do projeto
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        extra="ignore",      # ignora chaves extras no .env
+        extra="ignore",
     )
 
-# Instância única usada pelo app
 settings = Settings()
