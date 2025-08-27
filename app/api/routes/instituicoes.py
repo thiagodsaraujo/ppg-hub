@@ -47,14 +47,14 @@ def get_instituicao(instituicao_id: int, db: Session = Depends(get_session)):
         raise HTTPException(status_code=404, detail="Instituição não encontrada")
     return InstituicaoRead.model_validate(obj)
 
-
 @router.put("/{instituicao_id}", response_model=InstituicaoRead)
-def update_instituicao(instituicao_id: int, payload: InstituicaoUpdate, db: Session = Depends(get_session)):
-    service = InstituicaoService(db)
-    obj = service.update(instituicao_id, payload.model_dump(exclude_unset=True))
-    if not obj:
-        raise HTTPException(status_code=404, detail="Instituição não encontrada")
-    return InstituicaoRead.model_validate(obj)
+def put_instituicao(
+    instituicao_id: int = Path(..., ge=1),
+    payload: InstituicaoPut = ...,
+    db: Session = Depends(get_db),
+) -> InstituicaoRead:
+    service = InstituicaoService(InstituicaoRepository(db))
+    return service.put(instituicao_id, payload)
 
 @router.patch("/{instituicao_id}", response_model=InstituicaoRead)
 def patch_instituicao(
@@ -62,10 +62,6 @@ def patch_instituicao(
     payload: InstituicaoUpdate = ...,
     db: Session = Depends(get_db),
 ) -> InstituicaoRead:
-    """
-    Atualiza parcialmente uma instituição (PATCH).
-    Use `exclude_unset` para enviar só o que mudou.
-    """
     service = InstituicaoService(InstituicaoRepository(db))
     return service.patch(instituicao_id, payload)
 

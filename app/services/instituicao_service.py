@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.schemas.instituicao import InstituicaoUpdate, InstituicaoRead
+from app.schemas.instituicao import InstituicaoUpdate, InstituicaoRead, InstituicaoPut
 from app.repositories.instituicao_repo import InstituicaoRepository
 
 
@@ -28,27 +28,30 @@ class InstituicaoService:
     def delete(self, instituicao_id: int):
         return self.repo.delete(instituicao_id)
 
+    def put(self, instituicao_id: int, payload: InstituicaoPut) -> InstituicaoRead:
+        obj = self.repo.get(instituicao_id)
+        if not obj:
+            raise HTTPException(status_code=404, detail="Instituição não encontrada")
+        data = payload.model_dump()  # PUT = todos os campos do schema Put
+        try:
+            self.repo.update_replace(obj, data)
+            self.repo.db.commit()
+        except IntegrityError as e:
+            self.repo.db.rollback()
+            raise HTTPException(status_code=409, detail="Violação de integridade (sigla/código únicos).") from e
+        self.repo.db.refresh(obj)
+        return InstituicaoRead.model_validate(obj)
+
     def patch(self, instituicao_id: int, payload: InstituicaoUpdate) -> InstituicaoRead:
         obj = self.repo.get(instituicao_id)
         if not obj:
             raise HTTPException(status_code=404, detail="Instituição não encontrada")
-
-        # Converte somente campos enviados (Swagger: “application/json”)
         changes = payload.model_dump(exclude_unset=True)
-
-        # Regra opcional: não permitir alteração de 'codigo' por aqui
-        changes.pop("codigo", None)
-
-        self.repo.update_partial(obj, changes)
         try:
-            self.repo.db.commit()  # >>> sem commit não persiste
+            self.repo.update_partial(obj, changes)
+            self.repo.db.commit()
         except IntegrityError as e:
             self.repo.db.rollback()
-            # Ex.: conflito de 'sigla' única
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Violação de integridade (ex.: sigla/código já existe)",
-            ) from e
-
+            raise HTTPException(status_code=409, detail="Violação de integridade (sigla/código únicos).") from e
         self.repo.db.refresh(obj)
         return InstituicaoRead.model_validate(obj)

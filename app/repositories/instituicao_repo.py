@@ -27,16 +27,27 @@ class InstituicaoRepository:
         total = self.db.scalar(select(func.count()).select_from(Instituicao))
         return items, total
 
-    def update(self, instituicao_id: int, data: dict) -> Instituicao | None:
-        obj = self.get(instituicao_id)
-        if not obj:
-            return None
-        for k, v in data.items():
-            setattr(obj, k, v)
+    # def update(self, instituicao_id: int, data: dict) -> Instituicao | None:
+    #     obj = self.get(instituicao_id)
+    #     if not obj:
+    #         return None
+    #     for k, v in data.items():
+    #         setattr(obj, k, v)
+    #     self.db.add(obj)
+    #     self.db.commit()
+    #     self.db.refresh(obj)
+    #     return obj
+
+    def update_replace(self, obj: Instituicao, data: Mapping[str, Any]) -> Instituicao:
+        """PUT: substitui campos do recurso por data completa (validada no schema Put)."""
+        # Se 'codigo' for imutável no seu domínio, remova:
+        # data = {k: v for k, v in data.items() if k != "codigo"}
+        for field, value in data.items():
+            if hasattr(obj, field):
+                setattr(obj, field, value)
         self.db.add(obj)
-        self.db.commit()
-        self.db.refresh(obj)
         return obj
+
 
     def update_partial(self, obj: Instituicao, data: Mapping[str, Any]) -> Instituicao:
         """Atualiza somente campos presentes (PATCH)."""

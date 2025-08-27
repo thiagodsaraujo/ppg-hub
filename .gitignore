@@ -35,3 +35,5 @@ htmlcov/
 # Outros
 .DS_Store
 *.swp
+/alembic/env.py
+/requirements.txt

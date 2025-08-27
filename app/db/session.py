@@ -4,10 +4,10 @@ from app.core.config import settings
 from app.db.base import Base
 
 # Engine para o banco Postgres
-engine = create_engine(settings.DATABASE_URL, echo=False)
+engine = create_engine(settings.DATABASE_URL, echo=False, pool_pre_ping=True)
 
 # Factory para criar sessões
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, expire_on_commit=False)
 
 
 def get_db():
