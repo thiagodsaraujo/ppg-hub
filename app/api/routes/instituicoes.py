@@ -1,9 +1,11 @@
 from __future__ import annotations
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Path
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from app.db.session import get_session
+from app.db.session import get_session, get_db
+from app.repositories.instituicao_repo import InstituicaoRepository
+from app.services.instituicao_service import InstituicaoService
 
 from app.schemas.instituicao import (
     InstituicaoCreate,
@@ -11,7 +13,7 @@ from app.schemas.instituicao import (
     InstituicaoRead,
     InstituicaoList,
 )
-from app.services.instituicao_service import InstituicaoService
+
 
 router = APIRouter(prefix="/instituicoes", tags=["instituicoes"])
 
@@ -53,6 +55,19 @@ def update_instituicao(instituicao_id: int, payload: InstituicaoUpdate, db: Sess
     if not obj:
         raise HTTPException(status_code=404, detail="Instituição não encontrada")
     return InstituicaoRead.model_validate(obj)
+
+@router.patch("/{instituicao_id}", response_model=InstituicaoRead)
+def patch_instituicao(
+    instituicao_id: int = Path(..., ge=1),
+    payload: InstituicaoUpdate = ...,
+    db: Session = Depends(get_db),
+) -> InstituicaoRead:
+    """
+    Atualiza parcialmente uma instituição (PATCH).
+    Use `exclude_unset` para enviar só o que mudou.
+    """
+    service = InstituicaoService(InstituicaoRepository(db))
+    return service.patch(instituicao_id, payload)
 
 
 @router.delete("/{instituicao_id}", status_code=status.HTTP_204_NO_CONTENT)

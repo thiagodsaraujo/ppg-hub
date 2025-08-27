@@ -1,9 +1,13 @@
+# app/repositories/instituicao_repo.py
+from __future__ import annotations  # <- evita avaliar tipos em runtime
+from collections.abc import Mapping  # <- preferível em 3.9+
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 from app.models.instituicao import Instituicao
 
 
 class InstituicaoRepository:
+
     def __init__(self, db: Session):
         self.db = db
 
@@ -32,6 +36,16 @@ class InstituicaoRepository:
         self.db.add(obj)
         self.db.commit()
         self.db.refresh(obj)
+        return obj
+
+    def update_partial(self, obj: Instituicao, data: Mapping[str, Any]) -> Instituicao:
+        """Atualiza somente campos presentes (PATCH)."""
+        for field, value in data.items():
+            # ignorar chaves não mapeadas
+            if not hasattr(obj, field):
+                continue
+            setattr(obj, field, value)
+        self.db.add(obj)  # anexa à sessão se for transiente
         return obj
 
     def delete(self, instituicao_id: int) -> bool:

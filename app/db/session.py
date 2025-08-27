@@ -1,6 +1,7 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
+from app.db.base import Base
 
 # Engine para o banco Postgres
 engine = create_engine(settings.DATABASE_URL, echo=False)
@@ -17,6 +18,15 @@ def get_db():
     finally:
         db.close()
 
+def init_db():
+    """
+    Inicializa schemas e tabelas no banco.
+    """
+    with engine.begin() as conn:
+        conn.execute(text("CREATE SCHEMA IF NOT EXISTS auth"))
+        conn.execute(text("CREATE SCHEMA IF NOT EXISTS core"))
+
+    Base.metadata.create_all(bind=engine)
 
 # Alias para compatibilidade com código legado
 get_session = get_db
