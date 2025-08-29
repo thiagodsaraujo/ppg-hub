@@ -19,7 +19,8 @@ from app.api.routes.monitoring import router as monitoring_router, router  # ðŸ‘
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from app.core.config import settings
-from app.db.session import get_session, init_db
+from app.deps import get_session
+from app.db.session import init_db
 import socket
 from sqlalchemy import text
 from app.core.errors import (

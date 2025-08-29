@@ -1,9 +1,10 @@
 from __future__ import annotations
 from fastapi import APIRouter, Depends
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 import datetime, socket
 
-from app.db.session import get_session
+from app.deps import get_db
 
 router = APIRouter(prefix="", tags=["monitoring"])
 
@@ -18,25 +19,21 @@ def healthz() -> dict[str, str]:
 
 
 @router.get("/readyz")
-def readyz(db: Session = Depends(get_session)) -> dict[str, str]:
+def readyz(db: Session = Depends(get_db)) -> dict[str, str]:
     """
-    Readiness check da aplicação.
-
-    Verifica:
-    - Se a API está rodando
-    - Se o banco de dados responde
-    - Hostname e timestamp (útil em clusters)
+    Readiness check.
+    Verifica se a API está viva e se o banco responde a um ping simples.
     """
-    health = {
+    health: dict[str, str] = {
         "app_status": "ok",
         "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
         "hostname": socket.gethostname(),
     }
-
     try:
-        db.execute("SELECT 1")
+        # ping no BD; .scalar() força execução e leitura
+        db.scalar(text("SELECT 1"))
         health["database"] = "connected"
     except Exception as e:
-        health["database"] = f"error: {str(e)}"
-
+        # se você já registrou handlers globais, pode relançar; aqui devolvemos status legível
+        health["database"] = f"error: {e.__class__.__name__}: {e}"
     return health

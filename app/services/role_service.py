@@ -4,8 +4,6 @@ from sqlalchemy.orm import Session
 
 from app.repositories.role_repo import RoleRepository
 from app.schemas.role import RoleCreate, RoleUpdate, RoleOut
-from app.models.role import Role
-
 
 class RoleService:
     """

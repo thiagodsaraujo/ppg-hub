@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 from app.repositories.usuario_programa_repo import UsuarioProgramaRepository
 from app.schemas.usuario_programa import VincularUsuarioProgramaIn
 from app.models.usuario_programa import UsuarioPrograma
+from app.deps import get_db
+
 
 class UsuarioProgramaService:
     """Regras para vínculo usuário–programa."""

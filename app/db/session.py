@@ -1,22 +1,24 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
-from app.db.base import Base
+from app.db.base import Base# importa da central de dependências
+
 
 # Engine para o banco Postgres
-engine = create_engine(settings.DATABASE_URL, echo=False, pool_pre_ping=True)
+engine = create_engine(
+    settings.DATABASE_URL,
+    echo=False,
+    pool_pre_ping=True,
+    future=True,)
 
 # Factory para criar sessões
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine, expire_on_commit=False)
-
-
-def get_db():
-    """Dependência padrão para FastAPI (mais comum na comunidade)."""
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine,
+    expire_on_commit=False,
+    future=True,
+)
 
 def init_db():
     """
@@ -28,5 +30,3 @@ def init_db():
 
     Base.metadata.create_all(bind=engine)
 
-# Alias para compatibilidade com código legado
-get_session = get_db

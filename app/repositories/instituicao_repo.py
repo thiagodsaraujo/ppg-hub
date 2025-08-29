@@ -4,6 +4,9 @@ from collections.abc import Mapping  # <- preferível em 3.9+
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 from app.models.instituicao import Instituicao
+from app.deps import get_db
+
+
 
 
 class InstituicaoRepository:
@@ -48,6 +51,12 @@ class InstituicaoRepository:
         self.db.add(obj)
         return obj
 
+    def update_fields(self, obj: Instituicao, data: Mapping[str, Any]) -> Instituicao:
+        for field, value in data.items():
+            if hasattr(obj, field):
+                setattr(obj, field, value)
+        self.db.add(obj)
+        return obj
 
     def update_partial(self, obj: Instituicao, data: Mapping[str, Any]) -> Instituicao:
         """Atualiza somente campos presentes (PATCH)."""

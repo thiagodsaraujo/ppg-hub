@@ -6,6 +6,8 @@ from passlib.context import CryptContext
 from app.repositories.usuario_repo import UsuarioRepository
 from app.schemas.usuario import UsuarioCreate, UsuarioUpdate, UsuarioOut
 from app.models.usuario import Usuario
+from app.deps import get_db
+
 
 
 # ----------------- CRIPTOGRAFIA DE SENHA -----------------

@@ -14,4 +14,5 @@ from app.models.instituicao import Instituicao     # noqa: F401
 from app.models.programa import Programa           # noqa: F401
 from app.models.usuario import Usuario             # noqa: F401
 from app.models.usuario_programa import UsuarioPrograma  # noqa: F401
+from app.models.role import Role
 # fmt: on

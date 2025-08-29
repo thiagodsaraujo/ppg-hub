@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 from app.repositories.programa_repo import ProgramaRepository
 from app.schemas.programa import ProgramaCreate
 from app.models.programa import Programa
+from app.deps import get_db
+
 
 class ProgramaService:
     """Regras de negócio de Programa."""

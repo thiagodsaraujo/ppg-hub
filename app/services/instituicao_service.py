@@ -3,6 +3,8 @@ from __future__ import annotations
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
+from app.deps import get_db
+
 
 from app.schemas.instituicao import InstituicaoUpdate, InstituicaoRead, InstituicaoPut
 from app.repositories.instituicao_repo import InstituicaoRepository
@@ -32,14 +34,19 @@ class InstituicaoService:
         obj = self.repo.get(instituicao_id)
         if not obj:
             raise HTTPException(status_code=404, detail="Instituição não encontrada")
-        data = payload.model_dump()  # PUT = todos os campos do schema Put
+
+        data = payload.model_dump()  # PUT = payload completo
+        # regra opcional: impedir mudança de 'codigo'
+        data.pop("codigo", None)
+
+        self.repo.update_fields(obj, data)  # aplica campos
         try:
-            self.repo.update_replace(obj, data)
-            self.repo.db.commit()
+            self.repo.db.commit()  # PERSISTE
         except IntegrityError as e:
             self.repo.db.rollback()
-            raise HTTPException(status_code=409, detail="Violação de integridade (sigla/código únicos).") from e
-        self.repo.db.refresh(obj)
+            raise  # handler global devolve 409
+        self.repo.db.refresh(obj)  # RECARREGA (defaults/onupdate)
+
         return InstituicaoRead.model_validate(obj)
 
     def patch(self, instituicao_id: int, payload: InstituicaoUpdate) -> InstituicaoRead:

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from __future__ import annotations
 from typing import Optional, Dict, Any
 from pydantic import BaseModel, ConfigDict
 
@@ -25,3 +26,13 @@ class RoleUpdate(BaseModel):
 
 class RoleOut(RoleBase):
     id: int
+
+class RoleRead(BaseModel):
+    id: int
+    nome: str
+    descricao: Optional[str] = None
+    nivel_acesso: int = 1
+    permissoes: Dict[str, Any] = {}
+    ativo: bool = True
+
+    model_config = ConfigDict(from_attributes=True)
