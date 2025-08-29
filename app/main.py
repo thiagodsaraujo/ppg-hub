@@ -3,23 +3,16 @@ import datetime, socket
 import time
 from fastapi import FastAPI
 from sqlalchemy.exc import IntegrityError
-
 from app.api.routes import programas
-# Routers das entidades
 from app.api.routes.instituicoes import router as instituicoes_router
 from app.api.routes.roles import router as roles_router
 from app.api.routes.usuarios import router as usuarios_router
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from app.api.routes.programas import router as programas_router
-
-from sqlalchemy.orm import Session
-from fastapi import Depends
-from app.api.routes.monitoring import router as monitoring_router, router  # 👈 novo
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from app.core.config import settings
-from app.deps import get_session
+from app.deps import get_session, get_db
 from app.db.session import init_db
 import socket
 from sqlalchemy import text
@@ -29,7 +22,9 @@ from app.core.errors import (
     integrity_error_handler,
     unhandled_exception_handler,
 )
+from app.core.logging import setup_logging
 
+setup_logging()
 
 app = FastAPI(title="PPGHUB API", version="0.1.0")
 
@@ -51,10 +46,45 @@ app.include_router(programas.router)
 def on_startup():
     init_db()
 
+# rota raiz
+@app.get("/")
+async def root():
+    return {"message": "Bem-vindo à API do PPG Hub!"}
+
 @app.get("/healthzzzz")
 def healthz() -> dict[str, str]:
     return {"status": "ok"}
 
+@app.get("/ping")
+def ping():
+    return {"pong": True}
+
+
+@app.get("/routers-ping", tags=["monitoring"])
+def routers_ping() -> dict:
+    """
+    Lista todas as rotas registradas no FastAPI.
+    Útil para verificar se os routers foram incluídos corretamente.
+    """
+    routers_info = []
+    for route in app.routes:
+        if hasattr(route, "methods"):
+            routers_info.append({
+                "path": route.path,
+                "methods": list(route.methods),
+                "name": route.name,
+            })
+
+    return {
+        "total_routes": len(routers_info),
+        "routers": routers_info
+    }
+
+
+
+@app.get("/testdb")
+def test_db(db: Session = Depends(get_db)):
+    return {"ok": str(db.execute("SELECT 1").scalar())}
 @app.get("/hp", tags=["monitoring"])
 def health_plus(db: Session = Depends(get_session)) -> dict:
     """

@@ -1,39 +1,68 @@
-# app/schemas/programa.py
 from __future__ import annotations
-from datetime import date
-from typing import Optional
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Optional, List
+from pydantic import BaseModel, ConfigDict
 
-class ProgramaCreate(BaseModel):
-    """Entrada para criação de Programa."""
+
+# ----------------- BASE -----------------
+class ProgramaBase(BaseModel):
+    """
+    Esquema base de Programa.
+    Campos comuns para Create, Update, Read e List.
+    """
+
     instituicao_id: int
-    nome: str
-    sigla: str = Field(..., max_length=20)
-    nivel: str
-    modalidade: str = "Presencial"
     codigo_capes: Optional[str] = None
-    area_concentracao: Optional[str] = None
-    inicio_funcionamento: Optional[date] = None
-    conceito_capes: Optional[int] = None
-    data_ultima_avaliacao: Optional[date] = None
-    trienio_avaliacao: Optional[str] = None
-    configuracoes: dict = Field(default_factory=dict)
-    status: str = "Ativo"
-
-class ProgramaOut(BaseModel):
-    """Saída de Programa."""
-    model_config = ConfigDict(from_attributes=True)
-    id: int
-    instituicao_id: int
     nome: str
     sigla: str
-    nivel: str
-    modalidade: str
-    codigo_capes: Optional[str]
-    area_concentracao: Optional[str]
-    inicio_funcionamento: Optional[date]
-    conceito_capes: Optional[int]
-    data_ultima_avaliacao: Optional[date]
-    trienio_avaliacao: Optional[str]
-    configuracoes: dict
-    status: str
+    area_concentracao: Optional[str] = None
+    nivel: str  # Mestrado, Doutorado, Mestrado/Doutorado
+    modalidade: Optional[str] = "Presencial"
+    status: Optional[str] = "Ativo"
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ----------------- CREATE -----------------
+class ProgramaCreate(ProgramaBase):
+    """
+    Esquema usado para criação de Programa.
+    Herda de ProgramaBase.
+    """
+    pass
+
+
+# ----------------- UPDATE -----------------
+class ProgramaUpdate(BaseModel):
+    """
+    Esquema usado para atualização parcial de Programa (PATCH/PUT).
+    Todos os campos são opcionais para permitir atualização seletiva.
+    """
+    instituicao_id: Optional[int] = None
+    codigo_capes: Optional[str] = None
+    nome: Optional[str] = None
+    sigla: Optional[str] = None
+    area_concentracao: Optional[str] = None
+    nivel: Optional[str] = None
+    modalidade: Optional[str] = None
+    status: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ----------------- READ -----------------
+class ProgramaRead(ProgramaBase):
+    """
+    Esquema usado para respostas da API (GET).
+    Inclui o ID do programa.
+    """
+    id: int
+
+
+# ----------------- LIST (PAGINADO) -----------------
+class ProgramaList(BaseModel):
+    """
+    Esquema para listagem paginada de Programas.
+    Retorna a lista de Programas e o total de registros.
+    """
+    items: List[ProgramaRead]
+    total: int

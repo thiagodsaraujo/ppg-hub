@@ -4,14 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, status, Path, Query
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
-from app.deps import get_db  # <- único ponto para injetar sessão
-from app.repositories.instituicao_repo import InstituicaoRepository
+from app.deps import get_db
 from app.services.instituicao_service import InstituicaoService
-
 from app.schemas.instituicao import (
     InstituicaoCreate,
     InstituicaoUpdate,
-    InstituicaoPut,    # <- garantir que existe no seu schemas
+    InstituicaoPut,
     InstituicaoRead,
     InstituicaoList,
 )
@@ -29,11 +27,9 @@ def create_instituicao(
     payload: InstituicaoCreate,
     db: Session = Depends(get_db),
 ) -> InstituicaoRead:
-    """Cria e retorna a Instituição. Conflitos de unicidade retornam 409."""
-    service = InstituicaoService(InstituicaoRepository(db))
+    service = InstituicaoService(db)  # ✅ passa a Session
     try:
         obj = service.create(payload.model_dump())
-        # regra de transação ideal: commit dentro da service (recomendado)
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=409, detail="Violação de unicidade")
@@ -50,8 +46,7 @@ def list_instituicoes(
     limit: int = Query(10, ge=1, le=100),
     offset: int = Query(0, ge=0),
 ) -> InstituicaoList:
-    """Lista paginada com validação de parâmetros."""
-    service = InstituicaoService(InstituicaoRepository(db))
+    service = InstituicaoService(db)  # ✅
     items, total = service.list(limit, offset)
     return InstituicaoList(
         items=[InstituicaoRead.model_validate(obj) for obj in items],
@@ -68,8 +63,7 @@ def get_instituicao(
     instituicao_id: int = Path(..., ge=1),
     db: Session = Depends(get_db),
 ) -> InstituicaoRead:
-    """Busca por ID; retorna 404 se não existir."""
-    service = InstituicaoService(InstituicaoRepository(db))
+    service = InstituicaoService(db)  # ✅
     obj = service.get(instituicao_id)
     if not obj:
         raise HTTPException(status_code=404, detail="Instituição não encontrada")
@@ -87,8 +81,7 @@ def put_instituicao(
     payload: InstituicaoPut = ...,
     db: Session = Depends(get_db),
 ) -> InstituicaoRead:
-    """PUT substitui totalmente; retorna 409 em conflito de UNIQUE."""
-    service = InstituicaoService(InstituicaoRepository(db))
+    service = InstituicaoService(db)  # ✅
     try:
         obj = service.put(instituicao_id, payload)
     except IntegrityError:
@@ -107,13 +100,14 @@ def patch_instituicao(
     payload: InstituicaoUpdate = ...,
     db: Session = Depends(get_db),
 ) -> InstituicaoRead:
-    """PATCH parcial; retorna 409 em conflito e 404 se não existir."""
-    service = InstituicaoService(InstituicaoRepository(db))
+    service = InstituicaoService(db)  # ✅
     try:
         obj = service.patch(instituicao_id, payload)
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=409, detail="Violação de unicidade")
+    if not obj:
+        raise HTTPException(status_code=404, detail="Instituição não encontrada")
     return InstituicaoRead.model_validate(obj)
 
 
@@ -122,8 +116,12 @@ def patch_instituicao(
     status_code=status.HTTP_200_OK,
     summary="Remove uma instituição",
 )
-async def delete_instituicao(instituicao_id: int, db: Session = Depends(get_db)) -> dict[str, str]:
-    service = InstituicaoService(db)
-    service.delete(instituicao_id)
+def delete_instituicao(
+    instituicao_id: int = Path(..., ge=1),
+    db: Session = Depends(get_db),
+) -> dict[str, str]:
+    service = InstituicaoService(db)  # ✅
+    ok = service.delete(instituicao_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Instituição não encontrada")
     return {"message": "Instituição removida com sucesso"}
-

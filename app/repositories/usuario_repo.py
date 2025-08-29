@@ -1,6 +1,6 @@
 from __future__ import annotations
-from typing import Optional, List, Tuple
-from sqlalchemy import select, func, update as sa_update, delete as sa_delete
+from typing import Optional
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 from app.models.usuario import Usuario
 
@@ -31,12 +31,25 @@ class UsuarioRepository:
         stmt = select(Usuario).where(Usuario.email == email)
         return self.session.execute(stmt).scalars().first()
 
-    def list(self, limit: int = 50, offset: int = 0) -> Tuple[List[Usuario], int]:
-        """Lista usuários com paginação."""
+    def list(self, limit: int = 10, offset: int = 0, ativo: Optional[bool] = None):
+        """Lista usuários com paginação e filtro opcional por ativo/inativo."""
         stmt = select(Usuario).offset(offset).limit(limit)
-        items = list(self.session.execute(stmt).scalars().all())
-        total = self.session.scalar(select(func.count()).select_from(Usuario))
-        return items, int(total)
+        if ativo is not None:
+            stmt = stmt.where(Usuario.ativo == ativo)
+
+        items = self.session.scalars(stmt).all()
+
+        total_stmt = select(func.count()).select_from(Usuario)
+        if ativo is not None:
+            total_stmt = total_stmt.where(Usuario.ativo == ativo)
+
+        total = self.session.scalar(total_stmt)
+        return items, total
+
+    def list_all(self):
+        """Lista todos os usuários (sem paginação)."""
+        stmt = select(Usuario)
+        return self.session.scalars(stmt).all()
 
     # ----------------- UPDATE -----------------
     def update(self, usuario_id: int, data: dict) -> Optional[Usuario]:

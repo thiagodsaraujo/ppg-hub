@@ -4,10 +4,8 @@ from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 
 from app.repositories.usuario_repo import UsuarioRepository
-from app.schemas.usuario import UsuarioCreate, UsuarioUpdate, UsuarioOut
+from app.schemas.usuario import UsuarioCreate, UsuarioUpdate, UsuarioRead, UsuarioList
 from app.models.usuario import Usuario
-from app.deps import get_db
-
 
 
 # ----------------- CRIPTOGRAFIA DE SENHA -----------------
@@ -21,9 +19,7 @@ class UsuarioService:
     """
 
     def __init__(self, db: Session):
-        """
-        Inicializa o service com uma sessão ativa.
-        """
+        """Inicializa o service com uma sessão ativa."""
         self.repo = UsuarioRepository(db)
 
     # ----------------- UTILITÁRIOS -----------------
@@ -36,47 +32,47 @@ class UsuarioService:
         return pwd_context.verify(senha, senha_hash)
 
     # ----------------- CREATE -----------------
-    def create_usuario(self, payload: UsuarioCreate) -> UsuarioOut:
+    def create_usuario(self, payload: UsuarioCreate) -> UsuarioRead:
         """
         Cria um novo usuário no sistema.
         - Recebe `UsuarioCreate` (senha pura).
         - Gera o hash da senha e salva no banco.
-        - Retorna um `UsuarioOut` (sem senha).
+        - Retorna um `UsuarioRead` (sem senha).
         """
         data = payload.model_dump()
         senha_pura = data.pop("senha")
         data["senha_hash"] = self._hash_password(senha_pura)
 
         usuario = self.repo.create(data)
-        return UsuarioOut.model_validate(usuario)
+        return UsuarioRead.model_validate(usuario)
 
     # ----------------- READ -----------------
-    def get_usuario(self, usuario_id: int) -> Optional[UsuarioOut]:
+    def get_usuario(self, usuario_id: int) -> Optional[UsuarioRead]:
         """Busca um usuário por ID."""
         usuario = self.repo.get_by_id(usuario_id)
-        return UsuarioOut.model_validate(usuario) if usuario else None
+        return UsuarioRead.model_validate(usuario) if usuario else None
 
-    def get_usuario_by_email(self, email: str) -> Optional[UsuarioOut]:
+    def get_usuario_by_email(self, email: str) -> Optional[UsuarioRead]:
         """Busca usuário pelo e-mail (único)."""
         usuario = self.repo.get_by_email(email)
-        return UsuarioOut.model_validate(usuario) if usuario else None
+        return UsuarioRead.model_validate(usuario) if usuario else None
 
     def list_usuarios(
         self, limit: int = 50, offset: int = 0, ativo: Optional[bool] = None
-    ) -> Tuple[List[UsuarioOut], int]:
+    ) -> Tuple[List[UsuarioRead], int]:
         """
         Lista usuários com paginação.
         """
         items, total = self.repo.list(limit=limit, offset=offset, ativo=ativo)
-        return [UsuarioOut.model_validate(i) for i in items], total
+        return [UsuarioRead.model_validate(i) for i in items], total
 
-    def list_all_usuarios(self) -> List[UsuarioOut]:
+    def list_all_usuarios(self) -> List[UsuarioRead]:
         """Lista todos os usuários (sem paginação)."""
         items = self.repo.list_all()
-        return [UsuarioOut.model_validate(i) for i in items]
+        return [UsuarioRead.model_validate(i) for i in items]
 
     # ----------------- UPDATE -----------------
-    def update_usuario(self, usuario_id: int, payload: UsuarioUpdate) -> Optional[UsuarioOut]:
+    def update_usuario(self, usuario_id: int, payload: UsuarioUpdate) -> Optional[UsuarioRead]:
         """
         Atualiza um usuário existente.
         - Se `senha` for enviada, gera novo hash antes de salvar.
@@ -86,7 +82,7 @@ class UsuarioService:
             data["senha_hash"] = self._hash_password(data.pop("senha"))
 
         usuario = self.repo.update(usuario_id, data)
-        return UsuarioOut.model_validate(usuario) if usuario else None
+        return UsuarioRead.model_validate(usuario) if usuario else None
 
     # ----------------- DELETE -----------------
     def delete_usuario(self, usuario_id: int, hard: bool = False) -> bool:
@@ -98,16 +94,16 @@ class UsuarioService:
         return self.repo.delete(usuario_id, hard=hard)
 
     # ----------------- AUTENTICAÇÃO -----------------
-    def authenticate(self, email: str, senha: str) -> Optional[UsuarioOut]:
+    def authenticate(self, email: str, senha: str) -> Optional[UsuarioRead]:
         """
         Autentica usuário:
         - Busca por email.
         - Verifica senha.
-        - Retorna `UsuarioOut` se credenciais válidas.
+        - Retorna `UsuarioRead` se credenciais válidas.
         """
         usuario = self.repo.get_by_email(email)
         if not usuario:
             return None
         if not self._verify_password(senha, usuario.senha_hash):
             return None
-        return UsuarioOut.model_validate(usuario)
+        return UsuarioRead.model_validate(usuario)

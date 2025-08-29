@@ -30,3 +30,5 @@ class UsuarioProgramaRepository:
         if assoc:
             assoc.ativo = False
         return assoc
+
+

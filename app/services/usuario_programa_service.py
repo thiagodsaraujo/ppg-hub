@@ -25,3 +25,12 @@ class UsuarioProgramaService:
 
     def desativar(self, assoc_id: int) -> UsuarioPrograma | None:
         return self.repo.marcar_inativo(assoc_id)
+
+    def desvincular_usuario_programa(self, usuario_id: int, programa_id: int) -> bool:
+        vinculo = self.repo.get_by_usuario_programa(usuario_id, programa_id)
+        if not vinculo:
+            return False
+        vinculo.status = "Desligado"
+        vinculo.data_desvinculacao = date.today()
+        self.repo.session.commit()
+        return True

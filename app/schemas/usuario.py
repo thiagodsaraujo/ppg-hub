@@ -1,15 +1,14 @@
-from typing import Optional
-
+from __future__ import annotations
+from typing import Optional, List
 from pydantic import BaseModel, EmailStr, ConfigDict
 
 
 # ---- BASE -----
-
 class UsuarioBase(BaseModel):
     """
-    Esquema base para um usuario.
-    Base para todos os Schemas de Usuario
-    Contém atributos comuns a todos os esquemas. CREATE, UPDATE, READ, LIST.
+    Esquema base para um usuário.
+    Base para todos os Schemas de Usuário
+    Contém atributos comuns a CREATE, UPDATE, READ e LIST.
     """
 
     email: EmailStr
@@ -17,21 +16,23 @@ class UsuarioBase(BaseModel):
     role_id: int
     ativo: Optional[bool] = True
 
+    model_config = ConfigDict(from_attributes=True)
+
+
 # ---- CREATE -----
 class UsuarioCreate(UsuarioBase):
     """
-    Esquema para criação de um usuario.
+    Esquema para criação de um usuário.
     Herda de UsuarioBase e adiciona o campo senha.
     """
-
     senha: str
 
+
 # ---- UPDATE -----
-# ----------------- UPDATE -----------------
 class UsuarioUpdate(BaseModel):
     """
-    Schema usado para atualização parcial de usuários.
-    Todos os campos são opcionais para permitir patch.
+    Schema usado para atualização parcial de usuários (PATCH).
+    Todos os campos são opcionais para permitir atualização seletiva.
     """
     email: Optional[EmailStr] = None
     nome_completo: Optional[str] = None
@@ -41,11 +42,21 @@ class UsuarioUpdate(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-# ----------------- OUTPUT -----------------
-class UsuarioOut(UsuarioBase):
+
+# ---- READ (OUTPUT) -----
+class UsuarioRead(UsuarioBase):
     """
-    Schema usado nas respostas da API.
+    Schema usado para respostas da API (GET).
     Inclui o ID do usuário e oculta o campo de senha.
     """
     id: int
 
+
+# ---- LIST (PAGINADO) -----
+class UsuarioList(BaseModel):
+    """
+    Schema para listagem paginada de usuários.
+    Retorna a lista de usuários e o total de registros.
+    """
+    items: List[UsuarioRead]
+    total: int
