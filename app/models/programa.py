@@ -44,6 +44,9 @@ class Programa(Base):
         doc="Instituição mantenedora deste Programa.",
     )
 
+    # Dentro da classe Programa
+    docentes = relationship("Docente", back_populates="programa")
+
     # Identificação acadêmica
     codigo_capes: Mapped[Optional[str]] = mapped_column(
         String(20),
@@ -95,11 +98,11 @@ class Programa(Base):
     )
 
     # Associação (membros do programa)
-    membros_assoc: Mapped[list["UsuarioPrograma"]] = relationship(
+    usuarios_roles = relationship(
+        "UsuarioProgramaRole",
         back_populates="programa",
         cascade="all, delete-orphan",
         passive_deletes=True,
-        doc="Associações usuário↔programa.",
     )
 
     # (Opcional) Ajuda no debug

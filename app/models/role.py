@@ -4,6 +4,7 @@ from sqlalchemy import Integer, String, Boolean, DateTime, func
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import JSONB
 from app.db.base import Base
+from sqlalchemy.orm import relationship
 
 class Role(Base):
     """Modelo ORM para papéis (RBAC)."""
@@ -29,3 +30,11 @@ class Role(Base):
     atualizado_em: Mapped[Optional[Any]] = mapped_column(
         DateTime(timezone=True), nullable=True, onupdate=func.now()
     )
+
+    usuarios_roles = relationship(
+        "UsuarioProgramaRole",
+        back_populates="role",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+

@@ -5,6 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.models.role import Role
+from app.models.usuario_programa_role import UsuarioProgramaRole
 
 
 class Usuario(Base):
@@ -16,10 +17,15 @@ class Usuario(Base):
     # PK
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, autoincrement=True)
 
-    usuarios_programas: Mapped[list["UsuarioPrograma"]] = relationship(
+    programas_roles = relationship(
+        "UsuarioProgramaRole",
         back_populates="usuario",
+        foreign_keys=lambda: [UsuarioProgramaRole.usuario_id],
         cascade="all, delete-orphan",
     )
+
+    docentes = relationship("Docente", back_populates="usuario")
+
     # Identificação
     email: Mapped[String] = mapped_column(String(255), unique=True, index=True, nullable=False)
     senha_hash: Mapped[String] = mapped_column(String(255), nullable=False) # Armazena o hash da senha

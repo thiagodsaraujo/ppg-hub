@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from app.api.routes import programas
 from app.api.routes.instituicoes import router as instituicoes_router
 from app.api.routes.roles import router as roles_router
+from app.api.routes.docentes import router as docentes_router
 from app.api.routes.usuarios import router as usuarios_router
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -23,15 +24,18 @@ from app.core.errors import (
     unhandled_exception_handler,
 )
 from app.core.logging import setup_logging
+import app.models
 
 setup_logging()
 
 app = FastAPI(title="PPGHUB API", version="0.1.0")
 
-# “Nada silencioso”: handlers globais
+# Handlers específicos
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 app.add_exception_handler(IntegrityError, integrity_error_handler)
+
+# Fallback genérico (sempre por último)
 app.add_exception_handler(Exception, unhandled_exception_handler)
 
 
@@ -41,6 +45,7 @@ app.include_router(instituicoes_router)
 app.include_router(roles_router)
 app.include_router(usuarios_router)
 app.include_router(programas.router)
+app.include_router(docentes_router)
 
 @app.on_event("startup")
 def on_startup():

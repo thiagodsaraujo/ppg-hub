@@ -11,6 +11,7 @@ from app.schemas.programa import (
     ProgramaRead,
     ProgramaList,
 )
+from app.services.usuario_programa_role_service import UsuarioProgramaRoleService
 
 router = APIRouter(prefix="/programas", tags=["programas"])
 
@@ -58,8 +59,8 @@ def list_programas(
         total=total,
     )
 
-
 # ----------------- UPDATE -----------------
+
 @router.put(
     "/{programa_id}",
     response_model=ProgramaRead,
