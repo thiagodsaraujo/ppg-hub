@@ -10,7 +10,7 @@ from app.schemas.docente import (
     DocenteCreate,
     DocenteUpdate,
     DocenteRead,
-    DocenteList,
+    DocenteList, DocentePatch,
 )
 
 router = APIRouter(prefix="/docentes", tags=["Docentes"])
@@ -62,14 +62,28 @@ def list_docentes(
 @router.put(
     "/{docente_id}",
     response_model=DocenteRead,
-    summary="Atualizar docente",
+    status_code=status.HTTP_200_OK,
+    summary="Atualizar (PUT) docente",
 )
 def update_docente(
-    docente_id: int,
-    payload: DocenteUpdate,
+    docente_id: int = Path(..., ge=1),
+    payload: DocenteUpdate = ...,
     db: Session = Depends(get_db),
 ) -> DocenteRead:
     return DocenteService(db).update_docente(docente_id, payload)
+
+@router.patch(
+    "/{docente_id}",
+    response_model=DocenteRead,
+    status_code=status.HTTP_200_OK,
+    summary="Atualização parcial (PATCH) de docente",
+)
+def patch_docente(
+    docente_id: int = Path(..., ge=1),
+    payload: DocentePatch = ...,
+    db: Session = Depends(get_db),
+) -> DocenteRead:
+    return DocenteService(db).patch_docente(docente_id, payload)
 
 
 # ----------------- DELETE -----------------

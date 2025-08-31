@@ -1,79 +1,44 @@
-from __future__ import annotations
+# app/repositories/docente_repo.py
+from typing import Mapping, Any
 
-from typing import List, Optional, Tuple
-
+from sqlalchemy.orm import Session
 from sqlalchemy import select, func
-
 from app.models.docente import Docente
-from app.schemas.docente import DocenteCreate, DocenteUpdate
-
 
 class DocenteRepository:
-    """Repositório para operações de banco de dados relacionadas a Docente."""
+    """Persistência de Docente."""
 
-    def __init__(self, session):
-        self.session = session
+    def __init__(self, db: Session) -> None:
+        self.db = db
 
-        # --------------------------------------------------------
-        # CREATE
-        # --------------------------------------------------------
-
-    def create(self, data: DocenteCreate) -> Docente:
-        """Cria um novo docente no banco de dados."""
-        # Cria uma nova instância de Docente usando os dados fornecidos
-        new_docente = Docente(**data.model_dump())
-        # Adiciona o novo docente à sessão do banco de dados
-        self.session.add(new_docente)
-        # Salva as alterações no banco de dados
-        self.session.commit()
-        # Atualiza o objeto com dados do banco (ex: campos gerados)
-        self.session.refresh(new_docente)
-        # Retorna o docente recém-criado
-        return new_docente
-
-    # ---------------------------
-    # GET by ID
-    # ---------------------------
-    def get(self, docente_id: int) -> Optional[Docente]:
-        stmt = select(Docente).where(Docente.id == docente_id)
-        return self.session.scalar(stmt)
-
-    # ---------------------------
-    # LIST (com paginação)
-    # ---------------------------
-    def list(self, skip: int = 0, limit: int = 10) -> Tuple[List[Docente], int]:
-        """Lista docentes com paginação (items, total)."""
-        stmt = select(Docente).offset(skip).limit(limit)
-        items = list(self.session.scalars(stmt).all())
-        total = self.session.scalar(select(func.count()).select_from(Docente))
-        return items, total
-
-    # ---------------------------
-    # LIST ALL (sem paginação)
-    # ---------------------------
-    def list_all(self) -> List[Docente]:
-        """Lista todos os docentes (sem paginação)."""
-        stmt = select(Docente)
-        return list(self.session.scalars(stmt).all())
-
-    # ---------------------------
-    # UPDATE
-    # ---------------------------
-    def update(self, docente: Docente, data: DocenteUpdate) -> Docente:
-        """Atualiza dados de um docente existente."""
-        for field, value in data.model_dump(exclude_unset=True).items():
-            setattr(docente, field, value)
-        self.session.add(docente)
-        self.session.commit()
-        self.session.refresh(docente)
+    def create(self, payload: dict) -> Docente:
+        docente = Docente(**payload)
+        self.db.add(docente)
+        self.db.flush()
         return docente
 
-        # ---------------------------
-        # DELETE
-        # ---------------------------
+    def get(self, docente_id: int) -> Docente | None:
+        return self.db.get(Docente, docente_id)
 
-    def delete(self, docente: Docente) -> None:
-        """Remove um docente do banco."""
-        self.session.delete(docente)
-        self.session.commit()
+    def list(self, skip: int = 0, limit: int = 10) -> list[Docente]:
+        stmt = select(Docente).offset(skip).limit(limit)
+        return list(self.db.scalars(stmt).all())
 
+    def count(self) -> int:
+        stmt = select(func.count()).select_from(Docente)
+        return self.db.scalar(stmt)
+
+    def update_fields(self, docente: Docente, fields: Mapping[str, Any]) -> Docente:
+        for k, v in fields.items():
+            setattr(docente, k, v)
+        self.db.add(docente)
+        self.db.commit()
+        self.db.refresh(docente)
+        return docente
+
+    def delete(self, docente_id: int) -> bool:
+        docente = self.get(docente_id)
+        if not docente:
+            return False
+        self.db.delete(docente)
+        return True
